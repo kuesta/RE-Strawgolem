@@ -13,7 +13,7 @@ import java.util.function.BiConsumer;
 public class StrawClient {
     public static void registerRenderers(BiConsumer<EntityType<? extends Entity>, EntityRendererProvider> entityRenderers,
                                          BiConsumer<BlockEntityType<? extends BlockEntity>, BlockEntityRendererProvider> blockEntityRenderers) {
-        Constants.LOG.debug("LOAD REGISTERS!!!");
+        Constants.LOG.debug("Registering Renderers");
         entityRenderers.accept(EntityRegistry.STRAWGOLEM.get(), GolemRenderer::new);
     }
 }

@@ -22,7 +22,7 @@ public class GolemLegAnimationController extends AnimationController<StrawGolem>
         if (controller.getAnimationState().equals(State.STOPPED)) {
             controller.forceAnimationReset();
         }
-        System.out.println("LEGS: " + golem.movementStatus());
+//        System.out.println("LEGS: " + golem.movementStatus());
         controller.setAnimation(legs[golem.movementStatus()]);
         return PlayState.CONTINUE;
     };

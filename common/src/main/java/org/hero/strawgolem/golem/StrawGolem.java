@@ -108,7 +108,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
 // seems to have an item dupe glitch...
     @Override
     protected InteractionResult mobInteract(Player pPlayer, InteractionHand pHand) {
-        System.out.println("interact!");
+//        System.out.println("interact!");
         if (level().isClientSide) return InteractionResult.PASS;
         pPlayer.playSound(SoundRegistry.GOLEM_HAPPY.get());
         ItemStack item = pPlayer.getMainHandItem();
@@ -183,7 +183,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
 //        System.out.println("movement status: " + walkDist);
 //        System.out.println((walkDist > 0.0) + " " + (walkDist == 0.0));
         double movement = getDeltaMovement().horizontalDistance() * level().tickRateManager().tickrate();
-        System.out.println("mov status:"  + movement);
+//        System.out.println("mov status:"  + movement);
         return movement == 0 ? 0 : movement < defaultWalkSpeed * 0.8 ? 1 : 2;
     }
 
@@ -290,14 +290,14 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
         public void deliver(LevelReader level, BlockPos pos) {
             ItemStack item = StrawGolem.this.getMainHandItem();
             if (item != ItemStack.EMPTY && ContainerHelper.isContainer(level, pos)) {
-                System.out.println("deliver?");
+//                System.out.println("deliver?");
                 Container container = (Container) level.getBlockEntity(pos);
                 for (int i = 0; i < container.getContainerSize(); i++) {
                     ItemStack cItem = container.getItem(i);
                     if (cItem.is(item.getItem()) && container.getMaxStackSize(cItem) > cItem.getCount()) {
                         cItem.grow(item.getCount());
                         container.setItem(i, cItem);
-                        System.out.println("DELIVER!");
+//                        System.out.println("DELIVER!");
                         StrawGolem.this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                         return;
                     }
@@ -306,7 +306,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
                     ItemStack cItem = container.getItem(i);
                     if (cItem.isEmpty() && container.getMaxStackSize() > cItem.getCount()) {
                         container.setItem(i, item);
-                        System.out.println("DELIVER!");
+//                        System.out.println("DELIVER!");
                         StrawGolem.this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                         return;
                     }

@@ -18,7 +18,7 @@ public class GolemHarvestAnimationController extends AnimationController<StrawGo
         AnimationController<StrawGolem> controller = event.getController();
         // if the golem is picking a block up
         int status = golem.pickupStatus();
-        System.out.println("harvest animation: " + status);
+//        System.out.println("harvest animation: " + status);
         if (status != 0) {
             status--;
             // temporary no config options...
