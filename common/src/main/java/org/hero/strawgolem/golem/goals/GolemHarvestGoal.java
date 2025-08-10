@@ -57,16 +57,16 @@ public class GolemHarvestGoal extends MoveToBlockGoal {
             golem.getNavigation().stop();
         } else if (item != null && !item.isEmpty()) {
             harvestTimer++;
-            System.out.println(harvestTimer);
+//            System.out.println(harvestTimer);
             if (harvestTimer == 20 && predicate.filter(golem, blockPos) && ReachHelper.canReach(mob, blockPos)) {
                 // Double checking this, not going to let someone change a block
-                System.out.println("HARVEST!");
+//                System.out.println("HARVEST!");
                 item = harvest();
                 golem.setItemSlot(EquipmentSlot.MAINHAND, item);
                 blockReset(golem.level());
             }
             if (harvestTimer == 38) {
-                System.out.println("QUEUE");
+//                System.out.println("QUEUE");
                 golem.setPickupStatus(0);
             }
         }
@@ -95,7 +95,7 @@ public class GolemHarvestGoal extends MoveToBlockGoal {
     public boolean canUse() {
         // maybe add a delay before allowing golem to harvest again... could solve lag
         if (golem.getMainHandItem().isEmpty() && queue == null) {
-            System.out.println("can");
+//            System.out.println("can");
             queue = VisionHelper.nearbyBlocks(golem, predicate);
         } else if (queue != null && queue.isEmpty()) {
             queue = VisionHelper.nearbyBlocks(golem, predicate);
@@ -104,7 +104,7 @@ public class GolemHarvestGoal extends MoveToBlockGoal {
         do {
             blockPos = queue.poll();
         } while (!predicate.filter(golem, blockPos) && !queue.isEmpty());
-        System.out.println(blockPos + "pos");
+//        System.out.println(blockPos + "pos");
         return golem.getMainHandItem().isEmpty() && blockPos != null;
     }
 
