@@ -1,18 +1,18 @@
 package org.hero.strawgolem.golem;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.AbstractGolem;
@@ -42,7 +42,7 @@ import software.bernie.geckolib.util.RenderUtil;
 
 import java.util.Queue;
 
-import static org.hero.strawgolem.Constants.CONFIG;
+import static org.hero.strawgolem.Constants.*;
 
 public class StrawGolem extends AbstractGolem implements GeoAnimatable {
     public StrawGolem(EntityType<? extends StrawGolem> pEntityType, Level pLevel) {
@@ -52,17 +52,16 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
     public final Deliverer deliverer = new Deliverer();
     public final Harvester harvester = new Harvester();
 
-    public static final double defaultMovement = 0.23;
-    public static final double defaultWalkSpeed = 0.5;
-    public static final float baseHealth = 6;
+    public static final double defaultMovement = Golem.defaultMovement;
+    public static final double defaultWalkSpeed = Golem.defaultWalkSpeed;
+    public static final float baseHealth = Golem.maxHealth;
     private static final EntityDataAccessor<Boolean> HAT = SynchedEntityData.defineId(StrawGolem.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> CARRY_STATUS = SynchedEntityData.defineId(StrawGolem.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> PICKUP_STATUS = SynchedEntityData.defineId(StrawGolem.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> BARREL = SynchedEntityData.defineId(StrawGolem.class, EntityDataSerializers.INT);
-
+    private boolean forceAnimationReset = false;
     @Override
     protected void registerGoals() {
-        super.registerGoals();
         goalSelector.addGoal(2, new GolemWanderGoal(this));
         goalSelector.addGoal(1, new GolemDepositGoal(this));
         goalSelector.addGoal(1, new GolemHarvestGoal(this));
@@ -103,7 +102,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
     public void tick() {
         Item item = getMainHandItem().getItem();
         if (item instanceof BlockItem) setCarryStatus(2);
-        else if (getMainHandItem() != ItemStack.EMPTY) setCarryStatus(1);
+        else if (!getMainHandItem().isEmpty()) setCarryStatus(1);
         else setCarryStatus(0);
         super.tick();
     }
@@ -119,6 +118,14 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
                 entityData.set(BARREL, 100);
                 item.shrink(1);
             }
+            if (item.is(Items.WHEAT) && healthStatus() != 0) {
+                if (getMaxHealth() - getHealth() < 3.0f) {
+                    setHealth(getMaxHealth());
+                } else {
+                    setHealth(getHealth() + 3.0f);
+                }
+                item.shrink(1);
+            }
             return InteractionResult.CONSUME;
         }
         return super.mobInteract(pPlayer, pHand);
@@ -132,9 +139,12 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
             playSound(SoundEvents.SHIELD_BLOCK);
             return;
         } else if (hasBarrel()) { // barrel breaks
+            // Reduce the damage by the remaining barrel health
+            pDamageAmount -= barrelHP();
             entityData.set(BARREL, 0);
             playSound(SoundEvents.SHIELD_BREAK);
         }
+        // TODO: Add Panic
         super.actuallyHurt(pDamageSource, pDamageAmount);
     }
 
@@ -142,13 +152,10 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         // Checking if golem speed needs fixed
-//        if (tag.getBoolean("fixSpeed")) {
-//            this.getHunger().getState().updateSpeed(this);
-//        }
         // Hat!
         this.entityData.set(HAT, tag.getBoolean("hat"));
         this.entityData.set(CARRY_STATUS, tag.getInt("carry"));
-//        // Barrel!
+        // Barrel!
         this.entityData.set(BARREL, tag.getInt("barrelHP"));
     }
 
@@ -173,7 +180,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
      */
     public int healthStatus() {
         // basic code to check how dead a golem is
-        return getMaxHealth() <= getHealth() ? 0 : getMaxHealth() / 3 < getHealth() ? 1 : 2;
+        return getMaxHealth() - 0.0001f <= getHealth() ? 0 : getMaxHealth() * 0.333333 < getHealth() ? 1 : 2;
     }
 
     /**
@@ -249,6 +256,19 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
         return barrelHP() != 0;
     }
 
+    public boolean shouldForceAnimationReset() {
+        if (forceAnimationReset) {
+            forceAnimationReset = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void forceAnimationReset() {
+        this.forceAnimationReset = true;
+    }
+
     public class Harvester {
         Queue<BlockPos> harvestLocations;
         BlockPos nextLocation() {
@@ -258,34 +278,15 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
     }
     public class Deliverer {
         BlockPos storagePos;
+        BlockPos playerStoragePos;
         public BlockPos getDeliverable() {
             StrawGolem golem = StrawGolem.this;
 //            BiPredicate<StrawGolem, BlockPos> = new BiPredicate<>((U, T) -> VisionHelper.canSee(U, T));
-                BiPredicate e = (gol, pos) -> VisionHelper.canSee(gol, pos) && ContainerHelper.isContainer(gol, pos) && ReachHelper.canPath(gol, pos);
-//             Test e = new Test( filter(StrawGolem gol, BlockPos pos) -> VisionHelper.canSee(gol, pos));
-            if (storagePos != null && e.filter(golem, storagePos)) return storagePos;
-//            int range = Constants.Golem.searchRange;
-
-//            BlockPos closest = null;
-//            BlockPos query = StrawGolem.this.blockPosition();
-//            for (int x = -range; x <= range; ++x) {
-//                for (int y = -range / 2; y <= range / 2; ++y) {
-//                    for (int z = -range; z <= range; ++z) {
-//                        BlockPos pos = query.offset(x, y, z);
-////                        System.out.println(ContainerHelper.isContainer(StrawGolem.this.level(), pos) + " " + VisionHelper.canSee(StrawGolem.this, pos));
-//                        if (ContainerHelper.isContainer(golem.level(), pos)
-//                                && VisionHelper.canSee(golem, pos) && ReachHelper.canPath(golem, pos)
-//                                /*&& !invalidContainers.contains(pos)*/) {
-//                            // Should find the closest deliverable...
-//                            closest = closest == null || query.distManhattan(pos) < query.distManhattan(closest) ? pos : closest;
-////                            containerSet.add(pos);
-//                        }
-//                    }
-//                }
-//            }
-            BlockPos pos = VisionHelper.findNearestBlock(golem, e);
+            BiPredicate predicate = (gol, pos) -> VisionHelper.canSee(gol, pos) && ContainerHelper.isContainer(gol, pos) && ReachHelper.canPath(gol, pos);
+            if (storagePos != null && predicate.filter(golem, storagePos)) return storagePos;
+            BlockPos pos = VisionHelper.findNearestBlock(golem, predicate);
             // Keep StoragePos as the saved one (may change this for only save the player-specified ones...)
-            storagePos = storagePos == null ? pos : storagePos;
+            storagePos = storagePos == null || !predicate.filter(golem, storagePos) ? pos : storagePos;
             return pos;
         }
 
@@ -293,26 +294,29 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
             ItemStack item = StrawGolem.this.getMainHandItem();
             if (item != ItemStack.EMPTY && ContainerHelper.isContainer(level, pos)) {
 //                System.out.println("deliver?");
-                Container container = (Container) level.getBlockEntity(pos);
-                for (int i = 0; i < container.getContainerSize(); i++) {
-                    ItemStack cItem = container.getItem(i);
-                    if (cItem.is(item.getItem()) && container.getMaxStackSize(cItem) > cItem.getCount()) {
-                        cItem.grow(item.getCount());
-                        container.setItem(i, cItem);
+                if (level.getBlockEntity(pos) instanceof Container container) {
+                    for (int i = 0; i < container.getContainerSize(); i++) {
+                        ItemStack cItem = container.getItem(i);
+                        if (cItem.is(item.getItem()) && container.getMaxStackSize(cItem) > cItem.getCount()) {
+                            cItem.grow(item.getCount());
+                            container.setItem(i, cItem);
 //                        System.out.println("DELIVER!");
-                        StrawGolem.this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-                        return;
+                            StrawGolem.this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+                            return;
+                        }
+                    }
+                    for (int i = 0; i < container.getContainerSize(); i++) {
+                        ItemStack cItem = container.getItem(i);
+                        if (cItem.isEmpty() && container.getMaxStackSize() > cItem.getCount()) {
+                            container.setItem(i, item);
+//                        System.out.println("DELIVER!");
+                            StrawGolem.this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+                            return;
+                        }
                     }
                 }
-                for (int i = 0; i < container.getContainerSize(); i++) {
-                    ItemStack cItem = container.getItem(i);
-                    if (cItem.isEmpty() && container.getMaxStackSize() > cItem.getCount()) {
-                        container.setItem(i, item);
-//                        System.out.println("DELIVER!");
-                        StrawGolem.this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-                        return;
-                    }
-                }
+            } else {
+                LOG.error("Delivery location is not a container!");
             }
         }
 

@@ -1,5 +1,6 @@
 package org.hero.strawgolem.client;
 
+import net.minecraft.client.Minecraft;
 import org.hero.strawgolem.Constants;
 import org.hero.strawgolem.golem.StrawGolem;
 import software.bernie.geckolib.animation.AnimationController;
@@ -20,7 +21,7 @@ public class GolemArmAnimationController extends AnimationController<StrawGolem>
     private static final AnimationStateHandler<StrawGolem> PREDICATE = event -> {
         StrawGolem golem = event.getAnimatable();
         // if the golem is picking a block up
-        if (golem.pickupStatus() != 0) return PlayState.STOP;
+        if (golem.pickupStatus() != 0 || golem.shouldForceAnimationReset()) return PlayState.STOP;
         AnimationController<StrawGolem> controller = event.getController();
 //        System.out.println("arm animation: " + golem.carryStatus());
 
@@ -34,7 +35,6 @@ public class GolemArmAnimationController extends AnimationController<StrawGolem>
         } else if (golem.carryStatus() != 0) {
             controller.setAnimation(arms[3]);
         } else {
-//            System.out.println(golem.carryStatus());
             controller.setAnimation(arms[golem.movementStatus()]);
         }
         return PlayState.CONTINUE;
