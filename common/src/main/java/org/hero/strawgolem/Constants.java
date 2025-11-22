@@ -14,15 +14,22 @@ public class Constants {
     public static final IPlatformHelper COMMON_PLATFORM = ServiceLoader.load(IPlatformHelper.class).findFirst().orElseThrow();
     public static final Config CONFIG = new Config();
     public static class Golem {
+        // Health
+        public static final float maxHealth = CONFIG.getFloat("Max Health");
+        public static final float barrelHealth = CONFIG.getFloat("Barrel Max Health");
+        // Movement
         public static final double defaultMovement = 0.23;
-        public static final double defaultWalkSpeed = 0.5;
-        public static final double defaultRunSpeed = 0.8;
-        public static final int searchRange = 16;
+        public static final double defaultWalkSpeed = CONFIG.getDouble("Walk Speed");
+        public static final double defaultRunSpeed = CONFIG.getDouble("Run Speed");
+        public static final int wanderRange = CONFIG.getInt("Wander Range");;
+        public static final boolean panic = CONFIG.getBool("Panic When Hurt");
+        // Harvesting
+        public static final int searchRange = CONFIG.getInt("Harvest Range");
         public static final int searchRangeVertical = 3;
-        public static final int wanderRange = 24;
-        public static final float baseHealth = 6;
         public static final double depositDistance = 1.5;
-        public static final int barrelHealth = 100;
+        public static boolean blockHarvest = CONFIG.getBool("Block Harvesting");
+        public static boolean whitelistHarvest = CONFIG.getBool("Use Whitelist");
+        public static String whitelist = CONFIG.getString("Block Harvesting");
     }
 
     public static class Animation {
