@@ -8,11 +8,13 @@ import net.minecraft.world.level.LevelReader;
 import org.hero.strawgolem.Constants;
 import org.hero.strawgolem.Constants.Golem;
 import org.hero.strawgolem.golem.StrawGolem;
+import org.hero.strawgolem.golem.api.ContainerHelper;
 import org.hero.strawgolem.golem.api.ReachHelper;
 import org.hero.strawgolem.golem.api.VisionHelper;
 
 public class GolemDepositGoal extends GolemMoveToBlockGoal {
     private StrawGolem golem;
+    private boolean done = false;
     public GolemDepositGoal(StrawGolem golem) {
         super(golem, Golem.defaultWalkSpeed, Golem.searchRange, Golem.searchRangeVertical);
         this.golem = golem;
@@ -23,23 +25,24 @@ public class GolemDepositGoal extends GolemMoveToBlockGoal {
         blockPos = golem.deliverer.getDeliverable();
         // Safety check in case getDeliverable fails
         if (blockPos == null) {
-            System.out.println("START ERROR");
+            Constants.LOG.error("Deposit Start Error!");
             stop();
-            return;
+            done = true;
+        } else {
+            moveMobToBlock();
+            this.tryTicks = 0;
         }
-        moveMobToBlock();
-        this.tryTicks = 0;
     }
 
     @Override
     public void tick() {
         super.tick();
-//        System.out.println(getMoveToTarget());
-        if (this.blockPos == null){
+        if (this.blockPos == null){ // In theory not possible
             Constants.LOG.error("Missing block position!");
-        } else if (ReachHelper.canReach(mob, blockPos)) {
+        } else if (mob.hasItemInSlot(EquipmentSlot.MAINHAND) && ReachHelper.canReach(mob, blockPos)) {
             golem.deliverer.deliver(golem.level(), blockPos);
             golem.getNavigation().stop();
+            done = true;
         } else if (shouldRecalculatePath() && golemCollision(golem)) {
             nudge(golem);
         }
@@ -47,12 +50,14 @@ public class GolemDepositGoal extends GolemMoveToBlockGoal {
 
     @Override
     public boolean canUse() {
-        return mob.hasItemInSlot(EquipmentSlot.MAINHAND) && golem.deliverer.getDeliverable() != null;
+        return mob.hasItemInSlot(EquipmentSlot.MAINHAND)
+                && golem.deliverer.getDeliverable() != null;
     }
 
     @Override
     public boolean canContinueToUse() {
-        return this.blockPos != null && canUse() && golem.getNavigation().getPath() != null;
+        return !done && ContainerHelper.isContainer(mob, blockPos)
+                && canUse() && golem.getNavigation().getPath() != null;
     }
 
     @Override

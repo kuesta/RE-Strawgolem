@@ -40,35 +40,30 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
     @Override
     protected boolean isValidTarget(LevelReader levelReader, BlockPos blockPos) {
         return VisionHelper.canSee(golem, blockPos) && predicate.filter(golem, blockPos);
-//        return VisionHelper.canSee(mob, blockPos) && ReachHelper.canPath(mob, blockPos) && isPlant(levelReader, blockPos);
     }
 
     @Override
     public void tick() {
         try {
             super.tick();
-    //        if ()
-    //        System.out.println(blockPos);
-    //        if (golem.get)
-            System.out.println("Harvest tick: " + mob.getId());
-    //        System.out.println(blockPos.distToCenterSqr(mob.position()) + " " + (mob.getNavigation().getPath() == null ? true : mob.getNavigation().getPath().getDistToTarget()));
+            // Begin harvest phase animation
             if (ReachHelper.canReach(mob, blockPos) && item == null) {
                 // harvest time!
                 item = harvest();
                 golem.setPickupStatus(item);
                 golem.getNavigation().stop();
             } else if (item != null && !item.isEmpty()) {
+                // Phase Two of harvesting
+
+                // Timer to wait for animation to finish
                 harvestTimer++;
-    //            System.out.println(harvestTimer);
-                // Another golem harvested block (TODO: Mark blocks with golem IDs to avoid this confusion + Smarter harvesting)
+                // Another golem harvested block (TODO: Mark blocks with golem IDs, timestamp to avoid this confusion + Smarter harvesting)
                 if (harvestTimer == 20 && predicate.filter(golem, blockPos) && ReachHelper.canReach(mob, blockPos)) {
                     // Double checking this, not going to let someone change a block
-    //                System.out.println("HARVEST!");
                     item = harvest();
-                    golem.setItemSlot(EquipmentSlot.MAINHAND, item);
                     blockReset(golem.level());
+                    golem.setItemSlot(EquipmentSlot.MAINHAND, item);
                 } else if (harvestTimer == 40) {
-    //                System.out.println("QUEUE");
                     golem.setPickupStatus(0);
                 } else if (harvestTimer < 20 && !predicate.filter(golem, blockPos)) {
                     golem.forceAnimationReset();
@@ -76,9 +71,11 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
                     item = null;
                 }
             } else if (shouldRecalculatePath() && golemCollision(golem)) {
+                // Handling golem collisions.
                 nudge(golem);
             }
         } catch (Exception e) {
+            // Using a try-catch to avoid all risk of player crashes.
             Constants.LOG.error(e.getMessage());
             stop();
         }
@@ -87,42 +84,45 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
     }
     @Override
     public void start() {
-//        System.out.println((blockPos != null) + " Start");
         if (blockPos == null) blockPos = queue.poll();
-//        super.start();
         moveMobToBlock();
         this.tryTicks = 0;
         harvestTimer = 0;
         item = null;
-//        this.maxStayTicks = this.mob.getRandom().nextInt(this.mob.getRandom().nextInt(1200) + 1200) + 1200;
-//        this.mob.getNavigation().moveTo((double)this.blockPos.getX() + 0.5, (double)(this.blockPos.getY()), (double)this.blockPos.getZ() + 0.5, this.speedModifier);
     }
 
     @Override
     public void stop() {
-//        golem.forceAnimationReset();
         golem.setPickupStatus(0);
     }
 
     @Override
     protected void moveMobToBlock() {
-        this.mob.getNavigation().moveTo((double)this.blockPos.getX() + 0.5, (double)(this.blockPos.getY()), (double)this.blockPos.getZ() + 0.5, 0, this.speedModifier);
+        this.mob.getNavigation().moveTo((double)this.blockPos.getX() + 0.5,
+                (double)(this.blockPos.getY()),
+                (double)this.blockPos.getZ() + 0.5,
+                0, this.speedModifier);
     }
 
     @Override
     public boolean canUse() {
         // maybe add a delay before allowing golem to harvest again... could solve lag
+        // Creating the queue of blocks, prevents re-searching for targets every time
         if (golem.getMainHandItem().isEmpty() && queue == null) {
-//            System.out.println("can");
             queue = VisionHelper.nearbyBlocks(golem, predicate);
         } else if (queue != null && queue.isEmpty()) {
+            // If the queue is empty, remake it, may combine if statements...
             queue = VisionHelper.nearbyBlocks(golem, predicate);
         }
+        // No valid harvest locations or failed to create the queue.
         if (queue == null || queue.isEmpty()) return false;
         do {
+            // Go through the queue until a valid target is found.
             blockPos = queue.poll();
         } while (!predicate.filter(golem, blockPos) && !queue.isEmpty());
-//        System.out.println(blockPos + "pos");
+        // Either the queue is empty or there is a block position given.
+        // May give a blockpos out of sight range,
+        // unsure how this will harm golem efficiency.
         return golem.getMainHandItem().isEmpty() && isValidTarget(golem.level(), blockPos);
     }
 
@@ -135,6 +135,7 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
         return levelReader != null && blockPos != null && levelReader.getBlockState(blockPos).getBlock() instanceof CropBlock;
     }
 
+    // Checking if the blockpos on the level is a valid and grown plant.
     private boolean isGrownPlant(LevelReader levelReader, BlockPos blockPos) {
         if (levelReader == null || blockPos == null) return false;
         BlockState state = levelReader.getBlockState(blockPos);
@@ -148,7 +149,7 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
                 }
             }
         } else if (Constants.Golem.blockHarvest && state.getBlock()
-                == Blocks.PUMPKIN || state.getBlock() == Blocks.MELON) {
+                == Blocks.PUMPKIN || state.getBlock() == Blocks.MELON) { // Pumpkins and Melons
             // Just going to brute force this for now... don't care about efficiency currently
             for (Direction dir : Direction.values()) {
                 if (levelReader.getBlockState(blockPos.relative(dir))
@@ -163,21 +164,22 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
         return false;
     }
 
+    // Gets the item as if harvested from the plant.
     public ItemStack harvest() {
         if (golem.level() instanceof ServerLevel level) {
             BlockState state = level.getBlockState(blockPos);
-
             LootParams.Builder builder = new LootParams.Builder(level).
                     withParameter(LootContextParams.TOOL, ItemStack.EMPTY).
                     withParameter(LootContextParams.ORIGIN, mob.position());
             ItemStack drops =  state.getDrops(builder).stream().filter(this::isCropDrop).findFirst().orElse(ItemStack.EMPTY);
             return drops;
         } else {
-            Constants.LOG.error("Golem level not ServerLevel!!!");
+            Constants.LOG.error("Golem level not ServerLevel!");
             return ItemStack.EMPTY;
         }
     }
 
+    // Resets the age of the crop.
     private void blockReset(Level level) {
         BlockState state = level.getBlockState(blockPos);
         for (Property<?> prop : state.getProperties()) {
@@ -190,8 +192,11 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
             }
         }
     }
+
+    // Checking if an ItemStack is a crop drop and not seeds.
     private boolean isCropDrop(ItemStack item) {
-        return !(item.getItem() instanceof ItemNameBlockItem) || item.getItem().components().has(DataComponents.FOOD);
+        return !(item.getItem() instanceof ItemNameBlockItem)
+                || item.getItem().components().has(DataComponents.FOOD);
     }
 
 }

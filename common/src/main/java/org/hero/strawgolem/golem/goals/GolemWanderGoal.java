@@ -14,9 +14,15 @@ public class GolemWanderGoal extends WaterAvoidingRandomStrollGoal {
     public GolemWanderGoal(StrawGolem golem) {
         super(golem, StrawGolem.defaultWalkSpeed);
         wanderLimit = Constants.Golem.wanderRange;
-        startPos = golem.blockPosition();
     }
     // Eventually add wander limits again
+
+
+    @Override
+    public void start() {
+        super.start();
+        startPos = mob.blockPosition();
+    }
 
     @Override
     public boolean canUse() {

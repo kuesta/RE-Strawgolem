@@ -33,6 +33,7 @@ import org.hero.strawgolem.golem.api.VisionHelper;
 import org.hero.strawgolem.golem.goals.GolemDepositGoal;
 import org.hero.strawgolem.golem.goals.GolemHarvestGoal;
 import org.hero.strawgolem.golem.goals.GolemWanderGoal;
+import org.hero.strawgolem.registry.ItemRegistry;
 import org.hero.strawgolem.registry.SoundRegistry;
 import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -117,14 +118,15 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
             if (item.is(Items.BARREL) && barrelHP() != 100) {
                 entityData.set(BARREL, 100);
                 item.shrink(1);
-            }
-            if (item.is(Items.WHEAT) && healthStatus() != 0) {
+            } else if (item.is(Items.WHEAT) && healthStatus() != 0) {
                 if (getMaxHealth() - getHealth() < 3.0f) {
                     setHealth(getMaxHealth());
                 } else {
                     setHealth(getHealth() + 3.0f);
                 }
                 item.shrink(1);
+            } else if (item.is(ItemRegistry.STRAW_HAT.get()) && !hasHat()) {
+                entityData.set(HAT, true);
             }
             return InteractionResult.CONSUME;
         }
@@ -292,7 +294,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
 
         public void deliver(LevelReader level, BlockPos pos) {
             ItemStack item = StrawGolem.this.getMainHandItem();
-            if (item != ItemStack.EMPTY && ContainerHelper.isContainer(level, pos)) {
+            if (!item.isEmpty() && ContainerHelper.isContainer(level, pos)) {
 //                System.out.println("deliver?");
                 if (level.getBlockEntity(pos) instanceof Container container) {
                     for (int i = 0; i < container.getContainerSize(); i++) {
@@ -316,7 +318,8 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
                     }
                 }
             } else {
-                LOG.error("Delivery location is not a container!");
+                // Should in theory never trigger
+                LOG.error("Delivery location is not a container! {} {}", item.isEmpty(), ContainerHelper.isContainer(level, pos));
             }
         }
 

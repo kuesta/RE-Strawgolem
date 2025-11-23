@@ -19,19 +19,18 @@ public abstract class GolemMoveToBlockGoal extends MoveToBlockGoal {
         super(pMob, pSpeedModifier, pSearchRange, pVerticalSearchRange);
     }
 
+    // Method to check if there is a collision between straw golems.
     protected boolean golemCollision(StrawGolem golem) {
         return !golem.level().getEntitiesOfClass(StrawGolem.class,
                 golem.getBoundingBox().inflate(0.4),
                 (gol) -> !gol.position().equals(golem.position())).isEmpty();
     }
 
-    protected void nudge(StrawGolem golem, Vec3 pos) {
-        // Normalizing the golem's pos with the other pos
-        Vec3 dim = golem.position().subtract(pos).normalize();
-        double multiplier = 0.05;
-        golem.push(dim.multiply(multiplier, multiplier, multiplier));
-    }
-
+    // Method to nudge a golem to the side depending on its direction.
+    // North: West
+    // South: East
+    // West: North
+    // East: South
     protected void nudge(StrawGolem golem) {
         Vec3 nudgeDir = Vec3.ZERO;
         Direction dir = golem.getDirection();
@@ -44,8 +43,9 @@ public abstract class GolemMoveToBlockGoal extends MoveToBlockGoal {
         } else if (dir == Direction.EAST) {
             nudgeDir = Vec3.atLowerCornerOf(Direction.SOUTH.getNormal());
         }
+        // Multiplier to reduce the push force from 1 to 0.05.
         double multiplier = 0.05;
-        golem.push(nudgeDir.multiply(0.05, 0.05, 0.05));
+        golem.push(nudgeDir.multiply(multiplier, multiplier, multiplier));
     }
 
     @Override
