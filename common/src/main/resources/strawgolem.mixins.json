@@ -9,8 +9,7 @@
     "MixinServerPlayerMode"
   ],
   "client": [
-    "MixinPlayer",
-    "MixinMinecraft"
+    "MixinPlayer"
   ],
   "server": [],
   "injectors": {
