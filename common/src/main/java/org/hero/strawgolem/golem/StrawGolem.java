@@ -16,10 +16,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.AbstractGolem;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import org.hero.strawgolem.client.GolemArmAnimationController;
@@ -105,7 +102,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
     @Override
     public void tick() {
         Item item = getMainHandItem().getItem();
-        if (item instanceof BlockItem) setCarryStatus(2);
+        if (item instanceof BlockItem && !(item instanceof ItemNameBlockItem)) setCarryStatus(2);
         else if (!getMainHandItem().isEmpty()) setCarryStatus(1);
         else setCarryStatus(0);
         super.tick();
@@ -241,8 +238,12 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
 //        setItemSlot(EquipmentSlot.MAINHAND, item);
 
         if (!item.isEmpty()) {
-            if (item.getItem() instanceof BlockItem) setPickupStatus(2);
-            else setPickupStatus(1);
+            if (item.getItem() instanceof BlockItem && !(item.getItem() instanceof ItemNameBlockItem)) {
+                setPickupStatus(2);
+            }
+            else {
+                setPickupStatus(1);
+            }
         } else {
             setPickupStatus(0);
         }

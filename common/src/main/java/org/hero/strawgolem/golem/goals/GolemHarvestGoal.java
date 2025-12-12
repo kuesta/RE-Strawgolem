@@ -144,7 +144,9 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
         } else if (state.getBlock() instanceof BushBlock bush) {
             for (var prop : state.getProperties()) {
                 // I wish there was a fruit-bearing bush class...
-                if (prop instanceof IntegerProperty intProp && prop.getName().equals("age") && state.getValue(intProp) >= Collections.max(intProp.getPossibleValues()) ) {
+                if (prop instanceof IntegerProperty intProp && prop.getName().equals("age")
+                        && state.getValue(intProp) >= Collections.max(intProp.getPossibleValues()
+                )) {
                     return true;
                 }
             }
@@ -176,7 +178,8 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
             LootParams.Builder builder = new LootParams.Builder(level).
                     withParameter(LootContextParams.TOOL, ItemStack.EMPTY).
                     withParameter(LootContextParams.ORIGIN, mob.position());
-            ItemStack drops =  state.getDrops(builder).stream().filter(this::isCropDrop).findFirst().orElse(ItemStack.EMPTY);
+            ItemStack drops =  state.getDrops(builder).stream().filter(this::isCropDrop).findFirst()
+                    .orElse(state.getDrops(builder).stream().findFirst().orElse(ItemStack.EMPTY));
             return drops;
         } else {
             Constants.LOG.error("Golem level not ServerLevel!");
