@@ -1,10 +1,15 @@
 package org.hero.strawgolem.golem.goals;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.hero.strawgolem.Constants;
 import org.hero.strawgolem.Constants.Golem;
 import org.hero.strawgolem.golem.StrawGolem;
@@ -41,6 +46,7 @@ public class GolemDepositGoal extends GolemMoveToBlockGoal {
             Constants.LOG.error("Missing block position!");
         } else if (mob.hasItemInSlot(EquipmentSlot.MAINHAND) && ReachHelper.canReach(mob, blockPos)) {
             golem.deliverer.deliver(golem.level(), blockPos);
+            tryPlaySound();
             golem.getNavigation().stop();
             done = true;
         } else if (shouldRecalculatePath() && golemCollision(golem)) {
@@ -69,6 +75,28 @@ public class GolemDepositGoal extends GolemMoveToBlockGoal {
             Constants.LOG.error(e.getMessage());
         }
 
+    }
+
+    private SoundEvent tryParseSound() {
+        try {
+            BlockEntity block = golem.level().getBlockEntity(blockPos);
+            if (block == null) return null;
+
+            ResourceLocation location = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(block.getType());
+            if (location == null) return null;
+            return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.tryParse("block." + location.getPath() + ".open"));
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    private void tryPlaySound() {
+        SoundEvent event = tryParseSound();
+        if (event == null) {
+            event = SoundEvents.CHEST_OPEN;
+        }
+        golem.level().playSound(null, blockPos, event,
+                SoundSource.BLOCKS, 0.5F, golem.level().random.nextFloat() * 0.1F + 0.9F);
     }
 
     @Override
