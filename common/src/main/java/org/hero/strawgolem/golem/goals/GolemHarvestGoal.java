@@ -53,7 +53,8 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
                 golem.getNavigation().stop();
             } else if (item != null && !item.isEmpty()) {
                 // Phase Two of harvesting
-
+                golem.getLookControl().setLookAt( blockPos.getCenter().x,  blockPos.getCenter().y,
+                        blockPos.getCenter().z, 180, 180);
                 // Timer to wait for animation to finish
                 harvestTimer++;
                 // Another golem harvested block (TODO: Mark blocks with golem IDs, timestamp to avoid this confusion + Smarter harvesting)

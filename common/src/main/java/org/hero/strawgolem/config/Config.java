@@ -40,7 +40,7 @@ public class Config {
                         + " please use valid resource locations.");
         CONFIG = SimpleConfig.of("strawgolem").provider(this::provider)
                 .request();
-        System.out.println(CONFIG.isBroken());
+        Constants.LOG.debug("{}", CONFIG.isBroken());
     }
 
     // if the custom provider is not specified SimpleConfig will create an empty file instead

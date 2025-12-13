@@ -89,8 +89,6 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
                 this.currentTarget = items.getFirst();
                 blockPos = currentTarget.blockPosition();
                 moveMobToBlock();
-            } else {
-                System.out.println(currentTarget);
             }
         }
         if (!itemAcquired && !pickUp && ReachHelper.canReach(golem, currentTarget.blockPosition())
@@ -146,6 +144,10 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
         return golem.carryStatus() == 0 && hasNearbyItem() && VisionHelper.canSee(golem, items.getFirst().blockPosition());
     }
 
+    private boolean isInValidItems(Item item) {
+        if (validItems == null || validItems.isEmpty()) return false;
+        return validItems.contains(item);
+    }
     private void constructValidItems() {
         if (validItems != null) return;
         validItems = new HashSet<>();
@@ -155,7 +157,6 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
             for (Holder<Block> blockHolder : BuiltInRegistries.BLOCK.getTag(TagKey.create(Registries.BLOCK,
                     location)).get().stream().toList()) {
                 if (blockHolder.value() instanceof StemFruit fruitStem) {
-                    System.out.println(fruitStem.strawgolemRewrite$getFruit());
                     Item item = fruitStem.strawgolemRewrite$getFruit().asItem();
                     if (item != Items.AIR) {
                         validItems.add(fruitStem.strawgolemRewrite$getFruit().asItem());
@@ -170,13 +171,11 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
                         validItems.add(drop.getItem());
                     }
                     validItems.add(blockHolder.value().asItem());
-                    System.out.println(blockHolder.value() + " " + (blockHolder.value() instanceof StemBlock) + (blockHolder.value() instanceof StemFruit));
                 } else if (blockHolder.value().asItem() != Items.AIR) {
                     // May get rid of this, may not depending on if I want seeds.
                     validItems.add(blockHolder.value().asItem());
                 }
             }
-            System.out.println(validItems);
         } catch (Throwable e) {
             Constants.LOG.error("Error constructing valid items! {}", e.getMessage());
         }
