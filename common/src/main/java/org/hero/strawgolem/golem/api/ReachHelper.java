@@ -10,7 +10,7 @@ public final class ReachHelper {
         Path path = mob.getNavigation().createPath(pos, 1);
         return path != null && path.canReach();
     }
-
+    // May make this Vec3 instead of Vec3i for improved accuracy with dropped items.
     public static boolean canReach(Mob mob, BlockPos pos) {
         return pos.closerToCenterThan(mob.position(), Constants.Golem.depositDistance);
     }

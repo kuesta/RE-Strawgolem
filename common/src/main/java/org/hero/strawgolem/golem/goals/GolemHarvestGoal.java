@@ -6,7 +6,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
 import net.minecraft.world.item.ItemNameBlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -31,7 +30,7 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
     private Queue<BlockPos> queue;
     private int harvestTimer = 0;
     private ItemStack item;
-    private BiPredicate predicate = (gol, pos) -> /*VisionHelper.canSee(gol, pos) && */isGrownPlant(gol.level(), pos) && ReachHelper.canPath(gol, pos);
+    private BiPredicate<BlockPos> predicate = (gol, pos) -> /*VisionHelper.canSee(gol, pos) && */isGrownPlant(gol.level(), pos) && ReachHelper.canPath(gol, pos);
     public GolemHarvestGoal(StrawGolem golem) {
         super(golem, Constants.Golem.defaultWalkSpeed, Constants.Golem.searchRange, Constants.Golem.searchRangeVertical);
         this.golem = golem;
