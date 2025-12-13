@@ -73,8 +73,8 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
 
     @Override
     public void stop() {
-        super.stop();
-    }
+        // ToDo: Look into a more gradual stop
+        mob.getNavigation().stop();    }
 
     @Override
     public void tick() {
@@ -101,8 +101,8 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
 //            golem.getAttributes().getInstance(Attributes.MOVEMENT_SPEED).setBaseValue(0);
             golem.setPickupStatus(currentTarget.getItem());
             pickUp = true;
-        } else if (pickUp && currentTarget.isAlive() && golem.carryStatus() == 0
-                && ReachHelper.canReach(golem, currentTarget.blockPosition())) {
+        } else if (itemAcquired || (pickUp && currentTarget.isAlive() && golem.carryStatus() == 0
+                && ReachHelper.canReach(golem, currentTarget.blockPosition()))) {
             if (pickupTicks == 20) {
                 golem.setItemSlot(EquipmentSlot.MAINHAND, currentTarget.getItem());
                 itemAcquired = true;
@@ -113,6 +113,9 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
                 stop();
             }
             pickupTicks++;
+        } else {
+            pickUp = false;
+            golem.setPickupStatus(0);
         }
     }
 
@@ -120,6 +123,7 @@ public class GolemGrabGoal extends GolemMoveToBlockGoal {
     @Override
     public void start() {
         updateNearbyItems();
+        if (items.isEmpty()) return;
         blockPos = items.getFirst().blockPosition();
         moveMobToBlock();
     }

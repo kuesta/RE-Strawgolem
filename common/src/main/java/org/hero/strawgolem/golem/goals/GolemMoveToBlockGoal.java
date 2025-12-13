@@ -46,12 +46,6 @@ public abstract class GolemMoveToBlockGoal extends MoveToBlockGoal {
     }
 
     @Override
-    public void stop() {
-        // ToDo: Look into a more gradual stop
-        mob.getNavigation().stop();
-    }
-
-    @Override
     protected boolean isValidTarget(LevelReader levelReader, BlockPos blockPos) {
         return false;
     }
