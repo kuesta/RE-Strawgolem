@@ -145,7 +145,7 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
         }
         if (state.getBlock() instanceof CropBlock crop) {
             return crop.isMaxAge(state);
-        } else if (state.getBlock() instanceof BushBlock bush) {
+        } else if (state.getBlock() instanceof BushBlock bush && !(bush instanceof StemBlock)) {
             for (var prop : state.getProperties()) {
                 // I wish there was a fruit-bearing bush class...
                 if (prop instanceof IntegerProperty intProp && prop.getName().equals("age")
@@ -159,12 +159,11 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
             // Just going to brute force this for now... don't care about efficiency currently
             try {
                 for (Direction dir : Direction.values()) {
-                    if (levelReader.getBlockState(blockPos.relative(dir))
-                            .getBlock() instanceof AttachedStemBlock
-                            && state.hasProperty(AttachedStemBlock.FACING) && blockPos.relative(dir)
-                            .relative(state.getValue(AttachedStemBlock.FACING))
-                            .equals(blockPos)) {
-                        return true;
+                    BlockState stem = levelReader.getBlockState(blockPos.relative(dir));
+                    if (stem.getBlock() instanceof AttachedStemBlock) {
+                        return stem.hasProperty(AttachedStemBlock.FACING) && blockPos.relative(dir)
+                                .relative(stem.getValue(AttachedStemBlock.FACING))
+                                .equals(blockPos);
                     }
                 }
             } catch (Throwable e) {
@@ -194,13 +193,34 @@ public class GolemHarvestGoal extends GolemMoveToBlockGoal {
     // Resets the age of the crop.
     private void blockReset(Level level) {
         BlockState state = level.getBlockState(blockPos);
+        boolean hasAge = false;
         for (Property<?> prop : state.getProperties()) {
             // Let's assume age is not a weird property...
             if (prop.getName().equalsIgnoreCase("age") && prop instanceof IntegerProperty intprop) {
+                hasAge = true;
                 int value = state.getBlock().defaultBlockState().getValue(intprop);
                 level.playSound(null, blockPos, state.getSoundType().getBreakSound(), SoundSource.BLOCKS);
                 state = state.setValue(intprop, value);
                 level.setBlockAndUpdate(blockPos, state);
+                break;
+            }
+        }
+        if (!hasAge) {
+            try {
+                for (Direction dir : Direction.values()) {
+                    BlockState stem = golem.level().getBlockState(blockPos.relative(dir));
+                    if (stem.getBlock() instanceof AttachedStemBlock) {
+                        if (stem.hasProperty(AttachedStemBlock.FACING) && blockPos.relative(dir)
+                                .relative(stem.getValue(AttachedStemBlock.FACING))
+                                .equals(blockPos)) {
+                            golem.level().setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
+                        }
+                    }
+                }
+            } catch (Throwable e) {
+                Constants.LOG.error(e.getMessage());
+                // I'd rather wipe the block rather than duplicate it.
+                golem.level().setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
             }
         }
     }
