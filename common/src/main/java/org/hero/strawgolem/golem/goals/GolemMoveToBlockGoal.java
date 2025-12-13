@@ -12,9 +12,6 @@ import org.hero.strawgolem.golem.StrawGolem;
 import java.util.List;
 
 public abstract class GolemMoveToBlockGoal extends MoveToBlockGoal {
-    public GolemMoveToBlockGoal(PathfinderMob pMob, double pSpeedModifier, int pSearchRange) {
-        super(pMob, pSpeedModifier, pSearchRange);
-    }
     public GolemMoveToBlockGoal(PathfinderMob pMob, double pSpeedModifier, int pSearchRange, int pVerticalSearchRange) {
         super(pMob, pSpeedModifier, pSearchRange, pVerticalSearchRange);
     }
@@ -46,6 +43,12 @@ public abstract class GolemMoveToBlockGoal extends MoveToBlockGoal {
         // Multiplier to reduce the push force from 1 to 0.05.
         double multiplier = 0.05;
         golem.push(nudgeDir.multiply(multiplier, multiplier, multiplier));
+    }
+
+    @Override
+    public void stop() {
+        // ToDo: Look into a more gradual stop
+        mob.getNavigation().stop();
     }
 
     @Override

@@ -27,6 +27,7 @@ import org.hero.strawgolem.golem.api.ReachHelper;
 import org.hero.strawgolem.golem.api.BiPredicate;
 import org.hero.strawgolem.golem.api.VisionHelper;
 import org.hero.strawgolem.golem.goals.GolemDepositGoal;
+import org.hero.strawgolem.golem.goals.GolemGrabGoal;
 import org.hero.strawgolem.golem.goals.GolemHarvestGoal;
 import org.hero.strawgolem.golem.goals.GolemWanderGoal;
 import org.hero.strawgolem.mixinInterfaces.GolemOrderer;
@@ -65,6 +66,7 @@ public class StrawGolem extends AbstractGolem implements GeoAnimatable {
         goalSelector.addGoal(2, new GolemWanderGoal(this));
         goalSelector.addGoal(1, new GolemDepositGoal(this));
         goalSelector.addGoal(1, new GolemHarvestGoal(this));
+        goalSelector.addGoal(1, new GolemGrabGoal(this));
     }
 
     @Override
