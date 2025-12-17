@@ -17,12 +17,20 @@ jobs:
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'temurin'
-        server-id: github
-        settings-path: ${{ github.workspace }}
+        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
 
-    - name: Setup Gradle 8.10
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+      with:
+        gradle-version: '8.8'
+
+    - name: Add SHA Rev to version
+      run: sed -i "s/^\(version=[0-9]\+\(\.[0-9]\+\)*\)$/\1-${GITHUB_SHA::7}/" gradle.properties
+
+    - name: Setup Gradle 8.8
       uses: gradle/actions/setup-gradle@v5
       with:
          gradle-version: '8.8'
