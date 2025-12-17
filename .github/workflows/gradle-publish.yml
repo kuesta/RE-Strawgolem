@@ -34,6 +34,9 @@ jobs:
       with:
         gradle-version: '8.8'
 
+    - name: Define JAVA_HOME to use  
+      run: echo "org.gradle.java.home=$JAVA_HOME_21_X64" >> gradle.properties
+      
     - name: Add SHA Rev to version
       run: sed -i "s/^\(version=[0-9]\+\(\.[0-9]\+\)*\)$/\1-${GITHUB_SHA::7}/" gradle.properties
 
