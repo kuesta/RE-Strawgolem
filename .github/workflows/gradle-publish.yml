@@ -1,8 +1,15 @@
-name: Release
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
+# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
+
+name: Gradle Package
 
 on:
-  release:
-    types: [created]
+  workflow_run:
+    branches: kuesta-release
 
 jobs:
   build:
@@ -19,8 +26,8 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+        server-id: github
+        settings-path: ${{ github.workspace }}
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
@@ -30,19 +37,8 @@ jobs:
     - name: Add SHA Rev to version
       run: sed -i "s/^\(version=[0-9]\+\(\.[0-9]\+\)*\)$/\1-${GITHUB_SHA::7}/" gradle.properties
 
-    - name: Setup Gradle 8.8
-      uses: gradle/actions/setup-gradle@v5
-      with:
-         gradle-version: '8.8'
-
-    - name: init gradle wrapper
-      run: gradle wrapper
-
-    - name: Change wrapper permissions
-      run: chmod +x ./gradlew
-
     - name: Build with Gradle
-      run: ./gradlew build
+      run: gradle build
 
     - name: Create GitHub Release + upload asset
       uses: softprops/action-gh-release@v2
